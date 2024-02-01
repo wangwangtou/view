@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport"
+      content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <style>
+    body, html{width: 100%; height: 100%;margin: 0;padding: 0;}
+    table { width: 100%; border: #aaa 1px solid; border-collapse: collapse; }
+    th, td { text-align: center; min-width: 60px; }
+  </style>
+</head>
+
+<body>
+  <div id="table1">
+  </div>
+  <br>
+  <div id="table2">
+  </div>
+  <br>
+  <div id="table3">
+  </div>
+  <script>
+    var GDATA = 'EABADBDAAABEBABAABABABECABBACCABABACBAABCABEBCAAAAEAACBBDBAEABB';
+  </script>
+  <script>
+    var CONFIG = {
+      A: { prob: 46.9, ratio: 1, ratioTo500: 500 },
+      B: { prob: 22.8, ratio: 2, ratioTo500: 10 },
+      C: { prob: 11.3, ratio: 1.35, ratioTo500: 21 },
+      D: { prob: 10, ratio: 1.285, ratioTo500: 24 },
+      E: { prob: 9, ratio: 1.27, ratioTo500: 26 },
+    }
+  </script>
+  <script>
+  function renderTable(head, rows) {
+    var buf = [];
+    buf.push(
+      '<table border=1>',
+      '<thead>',
+      '<tr>',
+    )
+    head.forEach(function(cell) {
+      buf.push('<th>', cell, '</th>');
+    });
+    buf.push(
+      '</tr>',
+      '</thead>',
+      '<tbody>',
+    )
+    rows.forEach(function(row) {
+      buf.push('<tr>');
+      row.forEach(function(cell) {
+        buf.push('<td>', cell, '</td>');
+      });
+      buf.push('</tr>');
+    });
+    buf.push(
+      '</tbody>',
+      '</table>',
+    )
+    return buf.join("");
+  }
+  </script>
+  <script>
+    (function () {
+      var vals = [30, 50, 100, 120, 200];
+      var data = vals.map(function(val) { return GDATA.substring(GDATA.length - val) });
+      var head = ['Category'];
+      vals.forEach(function(val, index) {
+        Array.prototype.push.apply(head, [
+          val + ' standard prob',
+          'real prob',
+          'standard val',
+          'real val'
+        ])
+      });
+      document.getElementById('table1').innerHTML = renderTable(head,
+        ['A', 'B', 'C', 'D', 'E'].map(function(category) {
+          var config = CONFIG[category];
+          var reg = new RegExp(category, 'g');
+          var r = vals.map(function(val, index) { 
+            var m = data[index].match(reg);
+            return m ? m.length : 0;
+          });
+          var row = [category];
+          vals.forEach(function(val, index) {
+            Array.prototype.push.apply(row, [
+              config.prob,
+              (r[index]  * 100 / 30 ).toFixed(1),
+              (30 * config.prob / 100).toFixed(1),
+              r[index]
+            ])
+          })
+          return row;
+        })
+      )
+    })();
+  </script>
+  <script>
+    (function() {
+      var findLast = function(categorys) {
+        var len = GDATA.length;
+        for(var index = len - 1; len >= 0; index--) {
+          if (categorys.indexOf(GDATA[index]) >= 0) {
+            return len - index;
+          }
+        }
+        return -1;
+      }
+      var _log = function(a, b) {
+        return Math.log(a) / Math.log(b);
+      }
+      var head = ['Category', 'Last'];
+      var vals = [90,95,98,99,99.8,99.9];
+      Array.prototype.push.apply(head, vals);
+      document.getElementById('table3').innerHTML = renderTable(head, [
+        'A', 'B', 'C', 'D', 'E', 'BC', 'BD', 'BE', 'CD', 'CE', 'DE'
+      ].map(function (categorys) {
+        var prob = 0;
+        categorys.split('').forEach(function(category) { prob += CONFIG[category].prob });
+        var row = [categorys, findLast(categorys)];
+        Array.prototype.push.apply(row, vals.map(function(val) {
+          return Math.ceil(_log((100-val)/100, 1-prob/100));
+        }));
+        return row;
+      }));
+    })();
+  </script>
+  <script>
+    (function () {
+      var maxLen = 26;
+      var head = ['Category', 'Tag'];
+      for (var index = 0; index < maxLen; index++) {
+        head.push(index + 1);
+      }
+      var rows = [];
+      ['A', 'B', 'C', 'D', 'E'].forEach(function (category) {
+        var config = CONFIG[category];
+        var data = [];
+        var sum = [];
+        for (var index = 0; index < maxLen; index++) {
+          var val = parseInt(Math.pow(config.ratio, index).toFixed(1));
+          if (val < 500) {
+            data.push(val);
+            sum.push((index == 0 ? 0 : sum[index - 1]) + data[index]);
+          } else {
+            data.push('-');
+            sum.push('-');
+          }
+        }
+        var row1 = [category, 'time'];
+        Array.prototype.push.apply(row1, data);
+        rows.push(row1);
+        var row2 = [category, 'sum'];
+        Array.prototype.push.apply(row2, sum);
+        rows.push(row2);
+      });
+      document.getElementById('table2').innerHTML = renderTable(head, rows);
+    })();
+  </script>
+</body>
+</html>
